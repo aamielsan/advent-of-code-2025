@@ -15,23 +15,17 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        val numberOfBattery = 12
+        fun maxJoultage(bank: String, battery: String = ""): Long {
+            if (battery.length == 12) return battery.toLong()
 
-        fun maxJoultage(bank: String, battery: String = ""): Long =
-            when {
-                battery.length == numberOfBattery -> battery.toLong() // Full battery
-                else -> {
-                    bank
-                        .mapIndexed { index, digit ->
-                            (digit to bank.substring(index + 1))
-                        }
-                        .filter { (_, bank) -> bank.length + 1 + battery.length >= numberOfBattery }
-                        .maxBy { (digit, _) -> digit }
-                        .let { (digit, remainingBank) ->
-                            maxJoultage(remainingBank, battery + digit)
-                        }
-                }
-            }
+            val (digit, remainingBank) = bank
+                .withIndex()
+                .filter { (index, _) -> bank.length - index + battery.length >= 12 }
+                .maxBy { (_, digit) -> digit }
+                .let { (index, digit) -> digit to bank.substring(index + 1) }
+
+            return maxJoultage(remainingBank, battery + digit)
+        }
 
         return input.sumOf(::maxJoultage)
     }
