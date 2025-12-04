@@ -1,4 +1,4 @@
 import java.io.File
 
-fun readInput(name: String): List<String> =
-    File("src/main/kotlin/$name.txt").readLines()
+fun readInput(name: String): MutableList<String> =
+    File("src/main/kotlin/$name.txt").readLines().toMutableList()
