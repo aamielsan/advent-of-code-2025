@@ -71,10 +71,12 @@ fun main() {
                 .dropLast(1)
                 .map { line ->
                     splits.map { range ->
-                        line.substring(
-                            range.start,
-                            minOf(range.endInclusive + 1, line.length),
-                        )
+                        line
+                            .padEnd(splits.last().endInclusive + 1, ' ')
+                            .substring(
+                                range.start,
+                                range.endInclusive + 1
+                            )
                     }
                 }
 
@@ -90,22 +92,12 @@ fun main() {
         val result =
             transposed
                 .map { row ->
-                    val maxLength = row.maxOf { it.length }
-                    val paddedRows = row.map { number ->
-                        if (number.length < maxLength) {
-                            val padded = number.padEnd(maxLength, ' ')
-                            padded
-                        } else {
-                            number
-                        }
-                    }
-
-                    val columns = paddedRows.first().length
-                    val rows = paddedRows.size
+                    val columns = row.first().length
+                    val rows = row.size
 
                     (0 until columns).map { j ->
                         (0 until rows).fold("") { acc, i ->
-                            acc + paddedRows[i][j]
+                            acc + row[i][j]
                         }
                     }
                 }
