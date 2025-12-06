@@ -12,13 +12,11 @@ fun main() {
                     .map(String::toLong)
                     .withIndex()
 
-                println("arr: ${arr.map { it.value }}")
                 count = arr.count()
                 arr
             }
             .foldIndexed(MutableList<Long>(count) { 0 }) { idx, acc, line ->
                 line.forEach { (index, number) ->
-                    println("index: $index, number: $number, $acc")
                     when {
                         idx == 0 -> {
                             acc[index] = number
@@ -39,82 +37,54 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        val splits: List<ClosedRange<Int>> =
+        val splits: List<IntRange> =
             input
                 .last()
                 .foldIndexed(emptyList<Int>()) { index, acc, s ->
                     when {
                         s == ' ' -> acc
-                        else -> acc + index
+                        else -> acc + maxOf(0, index)
                     }
                 }
-                .zipWithNext()
-                .map { it.first until it.second - 1 }
+                .zipWithNext { a, b -> a until b - 1 }
                 .let {
-                    val last = it.last().last + 2 until input.maxBy(String::length).length
-                    it + listOf(last)
+                    it + listOf(
+                        it.last().last + 2 until input.maxBy(String::length).length,
+                    )
                 }
-                .also(::println)
 
         val operations =
             input
-                .takeLast(1)
-                .flatMap {
-                    it
-                        .split(" ")
-                        .filter(String::isNotEmpty)
-                        .map(String::trim)
-                }
+                .last()
+                .split(" ")
+                .filter(String::isNotEmpty)
+                .map(String::trim)
 
-        val lines: List<List<String>> =
+        // transpose, get all numbers in same column
+        // for each row, transpose again but for the digits + pad
+        val result =
             input
                 .dropLast(1)
                 .map { line ->
-                    splits.map { range ->
-                        line
-                            .padEnd(splits.last().endInclusive + 1, ' ')
-                            .substring(
-                                range.start,
-                                range.endInclusive + 1
-                            )
-                    }
+                    val padded = line.padEnd(splits.last().last + 1, ' ')
+                    splits.map { range -> padded.substring(range) }
                 }
-
-        // transpose, get all numbers in same column
-        val transposed =
-            (0 until lines.first().size).map { j ->
-                (0 until lines.size).map { i ->
-                    lines[i][j]
+                .transpose()
+                .map {
+                    // transpose to get the digits
+                    it
+                        .transposeString()
+                        .map(String::trim)
+                        .map(String::toLong)
                 }
-            }
-
-        // for each row, transpose again but for the digits + pad
-        val result =
-            transposed
-                .map { row ->
-                    val columns = row.first().length
-                    val rows = row.size
-
-                    (0 until columns).map { j ->
-                        (0 until rows).fold("") { acc, i ->
-                            acc + row[i][j]
-                        }
-                    }
-                }
-                // parse to long
-                .map { row ->
-                    row.map(String::trim).map(String::toLong)
-                }
-                .also(::println)
-                .mapIndexed { index, row ->
-                    val operation = operations[index]
-                    when (operation) {
+                .withIndex()
+                .sumOf { (index, row) ->
+                    when (operations[index]) {
                         "+" -> row.sum()
-                        "*" -> row.fold(1L) { acc, n -> acc * n }
+                        "*" -> row.multiply()
                         else -> error("Unknown operation")
                     }
                 }
-                .sum()
 
         return result
     }
@@ -123,3 +93,19 @@ fun main() {
 //    println(part1(input))
     println(part2(input))
 }
+
+fun <T> List<List<T>>.transpose(): List<List<T>> =
+    first().indices.map { i ->
+        (indices).map { j ->
+            this[j][i]
+        }
+    }
+
+fun List<String>.transposeString(): List<String> =
+    first().indices.map { i ->
+        (indices)
+            .map { j -> this[j][i] }
+            .joinToString("")
+    }
+
+fun List<Long>.multiply(): Long = fold(1L) { acc, n -> acc * n }
