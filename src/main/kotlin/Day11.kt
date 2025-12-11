@@ -3,19 +3,16 @@ fun main() {
     fun part1(input: List<String>): Long {
         val specs = input
             .fold(mapOf<String, Set<String>>()) { acc, line ->
-                line
+                acc + line
                     .split(":")
-                    .let {
-                        acc + (it[0] to it[1].trim().split(" ").toSet())
-                    }
+                    .let { it[0] to it[1].trim().split(" ").toSet() }
             }
 
-        fun visit(current: String): Long {
-            if (current == "out") return 1L
-            return specs[current]!!.sumOf { server ->
-                visit(server)
+        fun visit(current: String): Long =
+            when {
+                current == "out" -> 1L
+                else -> specs[current]!!.sumOf { server -> visit(server) }
             }
-        }
 
         return visit("you")
     }
@@ -24,11 +21,9 @@ fun main() {
     fun part2(input: List<String>): Long {
         val specs = input
             .fold(mapOf<String, Set<String>>()) { acc, line ->
-                line
+                acc + line
                     .split(":")
-                    .let {
-                        acc + (it[0] to it[1].trim().split(" ").toSet())
-                    }
+                    .let { it[0] to it[1].trim().split(" ").toSet() }
             }
 
         fun visit(
@@ -36,23 +31,14 @@ fun main() {
             needed: Set<String>,
             memo: MutableMap<Pair<String, Set<String>>, Long> = mutableMapOf(),
         ): Long {
-            if (current == "out") {
-                return if (needed.isEmpty()) 1L else 0L
-            }
+            if (current == "out") return if (needed.isEmpty()) 1L else 0L
 
             val key = current to needed
-            if (key in memo) {
-                return memo[key]!!
-            }
+            if (key in memo) return memo[key]!!
 
-            val servers = specs[current]!!
-
-            memo[key] = servers.sumOf { server ->
-                // Remove server from needed if we'll visit it next
-                visit(server, needed - server, memo)
-            }
-
-            return memo[key]!!
+            return specs[current]!!
+                .sumOf { server -> visit(server, needed - server, memo) }
+                .also { memo[key] = it }
         }
 
         return visit("svr", setOf("dac", "fft"))
